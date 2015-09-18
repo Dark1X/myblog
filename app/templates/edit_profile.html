@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+    <!-- 修改密码表单 -->
+{% block main %}
+    <div>
+    	<h1>编辑资料</h1>
+        {{ wtf.quick_form(form) }}
+    </div>
+{% endblock %}

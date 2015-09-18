@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="main-content">
+    <h1>
+        您好, {{ current_user.username }}!
+    </h1>
+    <h3>您的账户还未确认</h3>
+    <p>
+        在您未确认账户之前无法浏览其他内容。
+        请您检查您的收件箱，进行确认。
+    </p>
+    <p>
+        需要重新发送确认邮件?
+        <a href="{{ url_for('auth.resend_confirmation') }}">点击这里</a>
+    </p>
+</div>
+{% endblock %}
