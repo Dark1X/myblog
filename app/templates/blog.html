@@ -6,8 +6,7 @@
 <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}"> 
 {% if user.name or user.location %}
 <p>
-	{% if user.name %}{{ user.name }}{% endif %}
-	<br>
+	{% if user.name %}{{ user.name }}{% endif %} |
 	{% if user.location %}{{ user.location }}{% endif %}
 </p>
 {% endif %}

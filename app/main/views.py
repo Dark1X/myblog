@@ -39,7 +39,9 @@ def index():
         page, per_page = current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out = False)
     posts = pagination.items
-    return render_template('index.html', form= form, posts = posts, pagination = pagination, show_followed=show_followed)
+    categories = Category.query.order_by(Category.id.desc()).all()
+    return render_template('index.html', form= form, posts = posts, pagination = pagination,
+        show_followed=show_followed, categories=categories)
 
 @main.route('/user/<username>')
 def user(username):
@@ -65,20 +67,7 @@ def edit_profile():
     form.about_me.data = current_user.about_me
     return render_template('edit_profile.html', form = form)
 
-#分类
-# @main.route('/category-edit',methods=['GET','POST'])
-# @login_required
-# @admin_required
-# def category():
-#     form = CategoryForm()
-#     if form.validate_on_submit():
-#         category.body = Category(body=form.body.data)
-#         db.session.add(category)
-#         db.session.commit()
-#         flash('分类已经添加')
-#         return redirect(url_for('.category'))
-#     return render_template('category_edit.html',form=form)
-
+#管理员级别编辑个人资料
 @main.route('/edit-profile/<int:id>', methods=['GET','POST'])
 @login_required
 @admin_required
@@ -173,6 +162,27 @@ def post(id):
     comments = pagination.items
     return render_template('post.html', posts=[post],form=form,comments = comments,pagination=pagination)
 
+#分类
+@main.route('/category-edit', methods=['GET','POST'])
+@login_required
+@admin_required
+def category():
+    form = CategoryForm()
+    if form.validate_on_submit():
+        category = Category(body=form.body.data)
+        db.session.add(category)
+        db.session.commit()
+        flash('分类已经添加')
+        return redirect(url_for('.category'))
+    categories = Category.query.order_by(Category.id.desc()).all()
+    return render_template('category_edit.html',form=form,categories=categories)
+
+@main.route('/tag',methods=['GET','POST'])
+def tag():
+    categories = Category.query.order_by(Category.id.desc()).all()
+    return render_template('show_categories.html',categories=categories)
+
+#修改文章
 @main.route('/edit/<int:id>', methods=['GET','POST'])
 @login_required
 def edit(id):
@@ -181,14 +191,18 @@ def edit(id):
         abort(403)
     form = PostForm()
     if form.validate_on_submit():
-        post.head = form.head.data
-        post.body = form.body.data
+        post = Post(
+            title = form.title.data,
+            head = form.head.data,
+            category = category
+            )
         db.session.add(post)
         db.session.commit()
         flash('文章已经更改')
         return redirect(url_for('.post', id=post.id))
     form.body.data = post.body
     form.head.data = post.head
+    form.category.data = post.category
     return render_template('edit_post.html', form=form)
 
 @main.route('/follow/<username>')

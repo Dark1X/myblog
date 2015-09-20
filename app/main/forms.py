@@ -11,6 +11,7 @@ from ..models import Role, User
 
 class PostForm(Form):
     head = StringField('标题', validators=[Required(),Length(1,64)])
+    category = StringField('标签',validators=[Required()])
     body = PageDownField('有什么想法？', validators=[Required()])
     submit = SubmitField('提交')
 

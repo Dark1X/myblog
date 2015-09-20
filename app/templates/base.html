@@ -22,18 +22,21 @@
     <div class="blog-masthead">
         <div class="container">
             <nav class="blog-nav">
-                <div class="col-md-11">
-                <a class="blog-nav-item active" href="{{ url_for('main.index') }}">Home</a>
-                <a class="blog-nav-item" href="#">Category</a>
-                <a class="blog-nav-item" href="#">Comment</a>
-                {% if current_user.can(Permission.MODERATE_COMMENTS) %}
-                <a class="blog-nav-item" href="{{ url_for('main.moderate') }}">Comment Moderation</a>
-                {% endif %}
-                <a class="blog-nav-item" href="{{ url_for('main.aboutme') }}">About</a>
+                <div class="col-md-10">
+                    <a class="blog-nav-item active" href="{{ url_for('main.index') }}">Home</a>
+                    <a class="blog-nav-item" href="{{ url_for('main.tag') }}">Category</a>
+                    <a class="blog-nav-item" href="#">Comment</a>
+                    {% if current_user.can(Permission.MODERATE_COMMENTS) %}
+                    <a class="blog-nav-item" href="{{ url_for('main.moderate') }}">Comment Moderation</a>
+                    <a class="blog-nav-item" href="{{ url_for('main.category') }}">Category Edit</a>
+                    {% endif %}
+                    <a class="blog-nav-item" href="{{ url_for('main.aboutme') }}">About</a>
                 </div>
-                <div class="dropdown col-md-1">
+                <div class="dropdown col-md-2">
                 {% if current_user.is_authenticated() %}
-                <a href="#" class="blog-nav-item" data-toggle="dropdown">账户 <b class="caret"></b></a>
+                <a href="#" class="blog-nav-item" data-toggle="dropdown">
+                    <img src="{{ current_user.gravatar(size=18) }}"> {{ current_user.username }} <b class="caret"></b>
+                </a>
                 <ul class="dropdown-menu">
                     <li><a href="{{ url_for('auth.change_password') }}">变更密码</a></li>
                     <li><a href="{{ url_for('auth.change_email_request') }}">变更邮箱</a></li>
@@ -73,9 +76,16 @@
                         <p>新手程序员，任天堂爱好者</p>
                         <a href="http://www.weibo.com/SimuraEpona" target="_blank">新浪微博</a>
                         <hr />
-                        <p>There's nothing wrong with having a little fun</p>
-                    {% endblock %}    
+                        <p>There's nothing wrong with having a little fun</p>   
                     </div>
+                    <hr>
+                    <div>
+                        <h4>标签</h4>
+                        {% for category in categories %}
+                        <li><a href="#">{{ category.body }}</a></li>
+                        {% endfor %}
+                    </div>
+                    {% endblock %} 
                 </aside>
             </div>
         </div>
