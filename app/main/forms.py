@@ -11,9 +11,14 @@ from ..models import Role, User
 
 class PostForm(Form):
     head = StringField('标题', validators=[Required(),Length(1,64)])
-    category = StringField('标签',validators=[Required()])
+    # category = SelectField('标签',coerce=int)
     body = PageDownField('有什么想法？', validators=[Required()])
     submit = SubmitField('提交')
+
+    # def __init__(self,post,*args,**kwargs):
+    #     super(PostForm, self).__init__(*args, **kwargs)
+    #     self.category.choices=[(category.id,category.body) for category in Category.query.order_by(Category.body).all()]
+    #     self.post=post
 
 class CommentForm(Form):
     username =StringField('用户名', validators=[Required()])
