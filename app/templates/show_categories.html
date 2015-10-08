@@ -5,6 +5,9 @@
 <hr>
 {% for category in categories %}
 <li>{{ category.body }}</li>
+	{% for post in category.posts %}
+		{{ url_for('main.tag') }}
+	{% endfor %}
 {% endfor %}
 
 {% endblock %}

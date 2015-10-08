@@ -17,6 +17,7 @@
             </div>
         </div>
         <div class="post-footer">
+            <span class="label label-default">{{post.category}}</span>
             {% if current_user == post.author %}
             <a href="{{ url_for('.edit', id=post.id) }}">
                 <span class="label label-primary">编辑</span>

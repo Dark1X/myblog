@@ -53,7 +53,7 @@ class Category(db.Model):
     posts = db.relationship('Post',backref='category', lazy='dynamic')
 
     def __repr__(self):
-        return '<Category %r>' % self.name
+        return '<Category %r>' % self.body
 
 #评论
 class Comment(db.Model):
