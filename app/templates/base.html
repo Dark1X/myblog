@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="/static/app.css">
     {% block scripts %}
     {{ moment.include_moment() }}
+    {{ moment.lang('zh-CN') }}
     {% endblock %}
 </head>
 <body class="home-template">
@@ -24,28 +25,27 @@
             <nav class="blog-nav">
                 <div class="col-md-10">
                     <a class="blog-nav-item active" href="{{ url_for('main.index') }}">Home</a>
-                    <a class="blog-nav-item" href="{{ url_for('main.tag') }}">Category</a>
+                    <a class="blog-nav-item" href="{{ url_for('main.tags') }}">Category</a>
                     <a class="blog-nav-item" href="#">Comment</a>
                     {% if current_user.can(Permission.MODERATE_COMMENTS) %}
                     <a class="blog-nav-item" href="{{ url_for('main.moderate') }}">Comment Moderation</a>
                     <a class="blog-nav-item" href="{{ url_for('main.category') }}">Category Edit</a>
                     {% endif %}
-                    <a class="blog-nav-item" href="{{ url_for('main.aboutme') }}">About</a>
                 </div>
                 <div class="dropdown col-md-2">
-                {% if current_user.is_authenticated() %}
-                <a href="#" class="blog-nav-item" data-toggle="dropdown">
-                    <img src="{{ current_user.gravatar(size=18) }}"> {{ current_user.username }} <b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a href="{{ url_for('auth.change_password') }}">变更密码</a></li>
-                    <li><a href="{{ url_for('auth.change_email_request') }}">变更邮箱</a></li>
-                    <li><a href="{{ url_for('main.user', username=current_user.username) }}">个人资料</a></li>
-                    <li><a href="{{ url_for('auth.logout') }}">退出</a></li>
-                 </ul>
-                 {% else %}
-                 <a href="{{ url_for('auth.login') }}" class="blog-nav-item">登陆</a>
-                 {% endif %}
+                    {% if current_user.is_authenticated() %}
+                    <a href="#" class="blog-nav-item" data-toggle="dropdown">
+                        <img src="{{ current_user.gravatar(size=18) }}"> {{ current_user.username }} <b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('auth.change_password') }}">变更密码</a></li>
+                        <li><a href="{{ url_for('auth.change_email_request') }}">变更邮箱</a></li>
+                        <li><a href="{{ url_for('main.user', username=current_user.username) }}">个人资料</a></li>
+                        <li><a href="{{ url_for('auth.logout') }}">退出</a></li>
+                     </ul>
+                     {% else %}
+                     <a href="{{ url_for('auth.login') }}" class="blog-nav-item">登录</a>
+                     {% endif %}
                  </div>
             </nav>
         </div>
@@ -74,15 +74,39 @@
                         <br>
                         <p>SimuraEpona</p>
                         <p>新手程序员，任天堂爱好者</p>
-                        <a href="http://www.weibo.com/SimuraEpona" target="_blank">新浪微博</a>
+
+                        <ul class="list-inline">
+                            <li>
+                                <a class="navbar-brand" href="http://www.weibo.com/SimuraEpona" target="_blank">
+                                    <img alt="Weibo" src="/static/weibo.png" width="25" height="25">
+                                </a>
+                            </li>
+                            <li>
+                                <a class="navbar-brand" href="tencent://message/?uin=490472721&Site=&Menu=yes">
+                                    <img alt="QQ" src="/static/qq.png" width="25" height="25">
+                                </a>
+                            </li>
+                            <li>
+                                <a class="navbar-brand" href="https://github.com/SimuraEpona" target="_blank">
+                                    <img alt="GitHub" src="/static/github.png" width="25" height="25">
+                                </a>
+                            </li>
+                            <li>
+                                <a class="navbar-brand" href="mailto:490472721@qq.com" target="_blank">
+                                    <img alt="Weibo" src="/static/email.png" width="25" height="25">
+                                </a>
+                            </li>
+                        </ul>
+
+
                         <hr />
                         <p>There's nothing wrong with having a little fun</p>   
                     </div>
                     <hr>
-                    <div>
-                        <h4>标签</h4>
+                    <div class="nav nav-pills">
+                        <h4>分类</h4>
                         {% for category in categories %}
-                        <li><a href="#">{{ category.body }}</a></li>
+                        <li><a href="{{ url_for('main.tag', id = category.id) }}">{{ category.body }}</a></li>
                         {% endfor %}
                     </div>
                     {% endblock %} 

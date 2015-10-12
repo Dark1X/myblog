@@ -6,3 +6,9 @@
 *.sqlite
 
 *.sqlite
+
+*.xml
+
+.idea/.name
+
+*.iml

@@ -7,7 +7,17 @@
             </a>
         </div>
         <div class="post-content">
-            <a href="{{ url_for('main.post', id=post.id) }}"><h4>{{ post.head }}</h4></a>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-5">
+                        <a href="{{ url_for('main.post', id=post.id) }}"><h4>{{ post.head }}</h4></a>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>{{ moment(post.timestamp).format('YYYY-MM-DD HH:mm:ss') }}</h5>
+                    </div>
+                </div>
+            </div>
+
             <div class="post-body">
                 {% if post.body_html %}
                 {{ post.body_html | safe }}
@@ -16,24 +26,37 @@
                 {% endif %}
             </div>
         </div>
-        <div class="post-footer">
-            <span class="label label-default">{{post.category}}</span>
-            {% if current_user == post.author %}
-            <a href="{{ url_for('.edit', id=post.id) }}">
-                <span class="label label-primary">编辑</span>
-            </a>
-            {% elif current_user.is_administrator() %}
-            <a href="{{ url_for('.edit', id=post.id) }}">
-                <span class="label label-danger">编辑[Admin]</span>
-            </a>
-            {% endif %}
-            <a href="{{ url_for('.post', id=post.id) }}#comments">
-                <span class="label label-primary">{{ post.comments.count() }} 评论</span>
-            </a>
-            <a href="{{ url_for('.post', id=post.id) }}">
-                <span class="label label-default">阅读全文</span>
-            </a>
-            <span class='label label-info'>{{ post.author.username }}写于{{ moment(post.timestamp).format('YYYY-MM-DD') }}</span>
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2">
+                    <span class="label label-info">{{post.category.body}}</span>
+                </div>
+
+                <div class="col-md-5" align="right">
+                    <span class='label label-default'>作者: {{ post.author.username }}</span>
+
+                    {% if current_user == post.author %}
+                        <a href="{{ url_for('.edit', id=post.id) }}">
+                            <span class="label label-warning">编辑</span>
+                        </a>
+                    {% endif %}
+
+                    {% if current_user.is_administrator() %}
+                        <a href="{{ url_for('.edit', id=post.id) }}">
+                            <span class="label label-danger">编辑[Admin]</span>
+                        </a>
+                    {% endif %}
+
+                    <a href="{{ url_for('.post', id=post.id) }}#comments">
+                        <span class="label label-primary">{{ post.comments.count() }} 评论</span>
+                    </a>
+
+                    <a href="{{ url_for('.post', id=post.id) }}">
+                        <span class="label label-success">阅读全文</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </li>
     {% endfor %}

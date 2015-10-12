@@ -36,7 +36,7 @@ def index():
         page, per_page = current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out = False)
     posts = pagination.items
-    categories = Category.query.order_by(Category.id.desc()).all()
+    categories = Category.query.order_by(Category.id.asc()).all()
     return render_template('index.html', form= form, posts = posts, pagination = pagination,
                            categories=categories)
 
@@ -90,7 +90,8 @@ def edit_profile_admin(id):
     form.name.data = user.name
     form.location.data = user.location
     form.about_me.data = user.about_me
-    return render_template('edit_profile.html', form=form, user= user)
+    categories = Category.query.order_by(Category.id.asc()).all()
+    return render_template('edit_profile.html', form=form, user= user, categories = categories)
 
 @main.route('/blog/<username>')
 def blog(username):
@@ -98,11 +99,13 @@ def blog(username):
     if user is None:
         abort(404)
     page = request.args.get('page',1,type = int)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+    pagination = Post.query.order_by(Post.timestamp.asc()).paginate(
         page, per_page = current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out = False)
     posts = pagination.items
-    return render_template('blog.html', user=user,posts=posts, pagination = pagination)
+    categories = Category.query.order_by(Category.id.asc()).all()
+    return render_template('blog.html', user=user,posts=posts,
+                           pagination = pagination, categories = categories)
 
 @main.route('/moderate')
 @login_required
@@ -157,7 +160,9 @@ def post(id):
     pagination = post.comments.order_by(Comment.timestamp.desc()).paginate(
         page,per_page = current_app.config['FLASKY_COMMENTS_PER_PAGE'],error_out = False)
     comments = pagination.items
-    return render_template('post.html', posts=[post],form=form,comments = comments,pagination=pagination)
+    categories = Category.query.order_by(Category.id.asc()).all()
+    return render_template('post.html', posts=[post],form=form, categories = categories,
+                           comments = comments,pagination=pagination)
 
 #分类
 @main.route('/category-edit', methods=['GET','POST'])
@@ -171,13 +176,19 @@ def category():
         db.session.commit()
         flash('分类已经添加')
         return redirect(url_for('.category'))
-    categories = Category.query.order_by(Category.id.desc()).all()
+    categories = Category.query.order_by(Category.id.asc()).all()
     return render_template('category_edit.html',form=form,categories=categories)
 
-@main.route('/tag',methods=['GET','POST'])
-def tag():
+@main.route('/tags',methods=['GET','POST'])
+def tags():
     categories = Category.query.order_by(Category.id.asc()).all()
     return render_template('show_categories.html',categories=categories)
+
+@main.route('/tag/<int:id>',methods=['GET','POST'])
+def tag(id):
+    category = Category.query.get_or_404(id)
+    categories = Category.query.order_by(Category.id.asc()).all()
+    return render_template('show_category.html', category = category, categories = categories)
 
 #修改文章
 @main.route('/edit/<int:id>', methods=['GET','POST'])
@@ -199,7 +210,8 @@ def edit(id):
     form.body.data = post.body
     form.head.data = post.head
     form.category.data = post.categories_id
-    return render_template('edit_post.html', form=form)
+    categories = Category.query.order_by(Category.id.asc()).all()
+    return render_template('edit_post.html', form=form, categories = categories)
 
 @main.route('/follow/<username>')
 @login_required
@@ -270,7 +282,3 @@ def show_followed():
     resp = make_response(redirect(url_for('.index')))
     resp.set_cookie('show_followed','1', max_age=30*24*60*60)
     return resp
-
-@main.route('/aboutme')
-def aboutme():
-    return render_template('aboutme.html')
