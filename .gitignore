@@ -3,10 +3,6 @@
 
 *.sqlite
 
-*.sqlite
-
-*.sqlite
-
 *.xml
 
 .idea/.name
