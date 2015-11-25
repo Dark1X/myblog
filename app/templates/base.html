@@ -12,11 +12,14 @@
     <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
     <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="//cdn.ckeditor.com/4.5.5/standard/ckeditor.js"></script>
     <link rel="stylesheet" href="/static/app.css">
+
     {% block scripts %}
     {{ moment.include_moment() }}
     {{ moment.lang('zh-CN') }}
     {% endblock %}
+
 </head>
 <body class="home-template">
     <!-- 导航栏 -->
@@ -30,6 +33,7 @@
                     {% if current_user.can(Permission.MODERATE_COMMENTS) %}
                     <a class="blog-nav-item" href="{{ url_for('main.moderate') }}">Comment Moderation</a>
                     <a class="blog-nav-item" href="{{ url_for('main.category') }}">Category Edit</a>
+                    <a class="blog-nav-item" href="{{ url_for('main.create_post') }}">Create Post</a>
                     {% endif %}
                 </div>
                 <div class="dropdown col-md-2">
@@ -51,6 +55,7 @@
         </div>
     </div>
 	<section class="content">
+
         {% for message in get_flashed_messages() %}
         <div class="alert alert-warning">
             <button type="button" class="close" data-dismiss="alert">&times;</button>

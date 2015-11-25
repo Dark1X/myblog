@@ -183,3 +183,13 @@ div.flask-pagedown-preview h3 {
 div.page-header a {
     color: #000000;
 }
+
+pre {
+    background-color: #000000;
+    color: crimson;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+code {
+    background-color: darkgray;
+    color: blueviolet;
+}

@@ -17,7 +17,7 @@ class Config:
     FLASKY_ADMIN = '490472721@qq.com'
     FLASKY_POSTS_PER_PAGE = 5
     FLASKY_FOLLOWERS_PER_PAGE = 50
-    FLASKY_COMMENTS_PER_PAGE = 30
+    FLASKY_COMMENTS_PER_PAGE = 20
     SSL_DISABLE = False
 
     @staticmethod

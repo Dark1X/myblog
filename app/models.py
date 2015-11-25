@@ -1,5 +1,5 @@
-#encoding=utf-8
-#存储各类数据库模型
+# encoding=utf-8
+# 存储各类数据库模型
 
 import hashlib, bleach
 from datetime import datetime
@@ -10,95 +10,106 @@ from flask import current_app, request
 from flask.ext.login import UserMixin, AnonymousUserMixin
 from . import db, login_manager
 
-class Permission:#程序的权限
-    FOLLOW = 0x01#关注用户
-    COMMENT = 0x02#发表评论
-    WRITE_ARTICLES = 0x04#写文章
-    MODERATE_COMMENTS = 0x08#管理别人评论
-    ADMINISTER = 0x80#管理员权限
+
+class Permission:  # 程序的权限
+    FOLLOW = 0x01  # 关注用户
+    COMMENT = 0x02  # 发表评论
+    WRITE_ARTICLES = 0x04  # 写文章
+    MODERATE_COMMENTS = 0x08  # 管理别人评论
+    ADMINISTER = 0x80  # 管理员权限
+
 
 class Follow(db.Model):
     __tablename__ = 'follows'
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    timestamp = db.Column(db.DateTime,default = datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-#博客
+
 class Post(db.Model):
     __tablename__ = 'posts'
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     head = db.Column(db.Text)
     body = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, index=True, default= datetime.utcnow)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     body_html = db.Column(db.Text)
-    categories_id = db.Column(db.Integer,db.ForeignKey('categories.id'))
-    comments = db.relationship('Comment', backref='post',lazy='dynamic')
+    categories_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    comments = db.relationship('Comment', backref='post', lazy='dynamic')
 
     @staticmethod
-    def on_changed_body(target,value,oldvalue,initiator):
+    def on_changed_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
-                             'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
-                             'h1', 'h2', 'h3', 'p']
+                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                        'h1', 'h2', 'h3', 'p','img']
+        attrs = {
+            '*': ['class'],
+            'a': ['href', 'rel'],
+            'img': ['src', 'alt'],
+        }
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),
-            tags = allowed_tags, strip = True))
+            tags=allowed_tags, strip=True,attributes=attrs))
+
+
 db.event.listen(Post.body, 'set', Post.on_changed_body)
 
-#分类
+
 class Category(db.Model):
     __tablename__ = 'categories'
-    id = db.Column(db.Integer,primary_key = True)
-    body = db.Column(db.String(64),unique=True)
-    posts = db.relationship('Post',backref='category', lazy='dynamic')
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(64), unique=True)
+    posts = db.relationship('Post', backref='category', lazy='dynamic')
 
     def __repr__(self):
         return '<Category %r>' % self.body
 
-#评论
+
 class Comment(db.Model):
     __tablename__ = 'comments'
-    id = db.Column(db.Integer,primary_key =True)
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Text)
     body = db.Column(db.Text)
     body_html = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime,index=True, default =datetime.utcnow)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     disabled = db.Column(db.Boolean)
-    # author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
-    post_id = db.Column(db.Integer,db.ForeignKey('posts.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
 
     @staticmethod
-    def on_changed_body(target,value,oldvalue,initiator):
-        allowed_tags = ['a','abbr','acronym','b','code','em','i','strong']
+    def on_changed_body(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i', 'strong']
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),
-            tags = allowed_tags, strip = True))
-db.event.listen(Comment.body,'set',Comment.on_changed_body)
+            tags=allowed_tags, strip=True))
+
+
+db.event.listen(Comment.body, 'set', Comment.on_changed_body)
+
 
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
-    default = db.Column(db.Boolean , default = False, index = True)
+    default = db.Column(db.Boolean, default=False, index=True)
     permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
 
     @staticmethod
     def insert_roles():
         roles = {
-            'User':(Permission.FOLLOW |
-                    Permission.COMMENT |
-                    Permission.WRITE_ARTICLES, True),
-            'Moderator':(Permission.FOLLOW |
-                         Permission.COMMENT |
-                         Permission.WRITE_ARTICLES |
-                         Permission.MODERATE_COMMENTS, False),
-            'Administator':(0xff,False)
+            'User': (Permission.FOLLOW |
+                     Permission.COMMENT |
+                     Permission.WRITE_ARTICLES, True),
+            'Moderator': (Permission.FOLLOW |
+                          Permission.COMMENT |
+                          Permission.WRITE_ARTICLES |
+                          Permission.MODERATE_COMMENTS, False),
+            'Administator': (0xff, False)
         }
         for r in roles:
-            role = Role.query.filter_by(name = r).first()
+            role = Role.query.filter_by(name=r).first()
             if role is None:
-                role = Role(name = r)
+                role = Role(name=r)
             role.permissions = roles[r][0]
             role.default = roles[r][1]
             db.session.add(role)
@@ -119,28 +130,27 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(64))
     location = db.Column(db.String(64))
     about_me = db.Column(db.Text())
-    member_since = db.Column(db.DateTime(), default = datetime.utcnow)
-    last_seen = db.Column(db.DateTime(), default = datetime.utcnow)
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
-    posts = db.relationship('Post', backref='author', lazy= 'dynamic')
-    followed = db.relationship('Follow',foreign_keys=[Follow.follower_id],
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
+    followed = db.relationship('Follow', foreign_keys=[Follow.follower_id],
                                backref=db.backref('follower', lazy='joined'),
-                               lazy='dynamic', cascade= 'all, delete-orphan')
+                               lazy='dynamic', cascade='all, delete-orphan')
     followers = db.relationship('Follow', foreign_keys=[Follow.followed_id],
-                                backref=db.backref('followed',lazy='joined'),
-                                lazy='dynamic', cascade= 'all, delete-orphan')
-    # comments = db.relationship('Comment',backref='author',lazy='dynamic')
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic', cascade='all, delete-orphan')
 
-    def gravatar(self, size=100,default='identicon', rating='g'):
+    def gravatar(self, size=100, default='identicon', rating='g'):
         if request.is_secure:
             url = 'https://secure.gravatar.com/avatar'
         else:
             url = 'http://www.gravatar.com/avatar'
         hash = self.avatar_hash or hashlib.md5(self.email.encode('utf-8')).hexdigest()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
-            url=url, hash=hash, size =size, default = default, rating = rating)
+            url=url, hash=hash, size=size, default=default, rating=rating)
 
-    def __init__(self,**kwargs):#定义默认的用户角色
+    def __init__(self, **kwargs):  # 定义默认的用户角色
         super(User, self).__init__(**kwargs)
         if self.role is None:
             if self.email == current_app.config['FLASKY_ADMIN']:
@@ -218,8 +228,9 @@ class User(UserMixin, db.Model):
         db.session.commit()
         return True
 
-    def can(self,permissions):#检查用户是否有指定的权限
+    def can(self, permissions):  # 检查用户是否有指定的权限
         return self.role is not None and (self.role.permissions & permissions) == permissions
+
     def is_administrator(self):
         return self.can(Permission.ADMINISTER)
 
@@ -228,37 +239,40 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def follow(self,user):
+    def follow(self, user):
         if not self.is_following(user):
-            f=Follow(follower=self, followed=user)
+            f = Follow(follower=self, followed=user)
             db.session.add(f)
             db.session.commit()
 
-    def unfollow(self,user):
+    def unfollow(self, user):
         f = self.followed.filter_by(followed_id=user.id).first()
         if f:
             db.session.delete(f)
 
-    def is_following(self,user):
+    def is_following(self, user):
         return self.followed.filter_by(followed_id=user.id).first() is not None
 
-    def is_followed_by(self,user):
+    def is_followed_by(self, user):
         return self.followers.filter_by(follower_id=user.id).first() is not None
 
     @property
     def followed_posts(self):
-        return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id) \
             .filter(Follow.follower_id == self.id)
-    
 
     def __repr__(self):
         return '<User %r>' % self.username
 
-class AnonymousUser(AnonymousUserMixin):#检查用户是否有指定的权限
-    def can(self,permissions):
+
+class AnonymousUser(AnonymousUserMixin):  # 检查用户是否有指定的权限
+    def can(self, permissions):
         return False
+
     def is_administrator(self):
         return False
+
+
 login_manager.anonymous_user = AnonymousUser
 
 

@@ -1,11 +1,11 @@
-#encoding=utf-8
-#程序中各种路由的设定
-
+# encoding=utf-8
+# 程序中各种路由的设定
 
 # 2015－09-02 在未输入下面三行代码时出现
 # UnicodeDecodeError: 'ascii' codec can't decode byte 0xe9 in position 0: ordinal not in range(128)错误
 # 上网查找后需要插入上述三行代码
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -14,40 +14,50 @@ from flask.ext.login import login_required, current_user
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm, CategoryForm
 from .. import db
-from ..models import User,Role,Permission,Post,Comment,Category
-from ..decorators import admin_required,permission_required
+from ..models import User, Role, Permission, Post, Comment, Category
+from ..decorators import admin_required, permission_required
 
 
-@main.route('/', methods=['GET','POST'])
+@main.route('/', methods=['GET', 'POST'])
 def index():
-    form = PostForm()
-    form.category.choices = [(category.id, category.body) for category in Category.query.order_by(Category.body).all()]
-    if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
-        post= Post(head=form.head.data,
-                   body=form.body.data,
-                   category = category,
-                   author = current_user._get_current_object())
-        db.session.add(post)
-        db.session.commit()
-        return redirect(url_for('.index'))
-    page = request.args.get('page',1,type = int)
+    page = request.args.get('page', 1, type=int)
     query = Post.query
     pagination = query.order_by(Post.timestamp.desc()).paginate(
-        page, per_page = current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out = False)
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
     posts = pagination.items
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('index.html', form= form, posts = posts, pagination = pagination,
+    return render_template('index.html', posts=posts, pagination=pagination,
                            categories=categories)
+
+
+@main.route('/new-post', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    form = PostForm()
+    form.category.choices = [(category.id, category.body) \
+                             for category in Category.query.order_by(Category.body).all()]
+    if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
+        post = Post(head=form.head.data,
+                    body=form.body.data,
+                    category=category,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        db.session.commit()
+        return redirect(url_for('.create_post'))
+    categories = Category.query.order_by(Category.id.asc()).all()
+    return render_template('create_post.html', form=form, categories=categories)
+
 
 @main.route('/user/<username>')
 def user(username):
-    user= User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
     if user is None:
-    	abort(404)
-    return render_template('user.html', user = user)
+        abort(404)
+    return render_template('user.html', user=user)
 
-@main.route('/edit-profile', methods=['GET','POST'])
+
+@main.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     form = EditProfileForm()
@@ -58,14 +68,15 @@ def edit_profile():
         db.session.add(current_user)
         db.session.commit()
         flash('您的资料已经更新')
-        return redirect(url_for('.user', username = current_user.username))
+        return redirect(url_for('.user', username=current_user.username))
     form.name.data = current_user.name
     form.location.data = current_user.location
     form.about_me.data = current_user.about_me
-    return render_template('edit_profile.html', form = form)
+    return render_template('edit_profile.html', form=form)
 
-#管理员级别编辑个人资料
-@main.route('/edit-profile/<int:id>', methods=['GET','POST'])
+
+# 管理员级别编辑个人资料
+@main.route('/edit-profile/<int:id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def edit_profile_admin(id):
@@ -82,7 +93,7 @@ def edit_profile_admin(id):
         db.session.add(user)
         db.session.commit()
         flash('您的资料已经更新')
-        return redirect(url_for('.user', username= user.username))
+        return redirect(url_for('.user', username=user.username))
     form.email.data = user.email
     form.username.data = user.username
     form.confirmed.data = user.confirmed
@@ -91,21 +102,23 @@ def edit_profile_admin(id):
     form.location.data = user.location
     form.about_me.data = user.about_me
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('edit_profile.html', form=form, user= user, categories = categories)
+    return render_template('edit_profile.html', form=form, user=user, categories=categories)
+
 
 @main.route('/blog/<username>')
 def blog(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
         abort(404)
-    page = request.args.get('page',1,type = int)
+    page = request.args.get('page', 1, type=int)
     pagination = Post.query.order_by(Post.timestamp.asc()).paginate(
-        page, per_page = current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out = False)
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
     posts = pagination.items
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('blog.html', user=user,posts=posts,
-                           pagination = pagination, categories = categories)
+    return render_template('blog.html', user=user, posts=posts,
+                           pagination=pagination, categories=categories)
+
 
 @main.route('/moderate')
 @login_required
@@ -113,10 +126,11 @@ def blog(username):
 def moderate():
     page = request.args.get('page', 1, type=int)
     pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(
-                page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
-                error_out=False)
+        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+        error_out=False)
     comments = pagination.items
-    return render_template('moderate.html', comments=comments,pagination=pagination, page=page)
+    return render_template('moderate.html', comments=comments, pagination=pagination, page=page)
+
 
 @main.route('/moderate/enable/<int:id>')
 @login_required
@@ -141,31 +155,33 @@ def moderate_disable(id):
     return redirect(url_for('.moderate',
                             page=request.args.get('page', 1, type=int)))
 
-@main.route('/post/<int:id>', methods=['GET','POST'])
+
+@main.route('/post/<int:id>', methods=['GET', 'POST'])
 def post(id):
-    post=Post.query.get_or_404(id)
-    form=CommentForm()
+    post = Post.query.get_or_404(id)
+    form = CommentForm()
     if form.validate_on_submit():
-        comment = Comment(body = form.body.data,
+        comment = Comment(body=form.body.data,
                           post=post,
-                          username = form.username.data)
+                          username=form.username.data)
         db.session.add(comment)
         db.session.commit()
         flash('你的评论已经提交')
-        return redirect(url_for('.post',id=post.id, page=-1))
-    page = request.args.get('page',1,type=int)
+        return redirect(url_for('.post', id=post.id, page=-1))
+    page = request.args.get('page', 1, type=int)
     if page == -1:
-        page = (post.comments.count()-1) / \
-            current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
+        page = (post.comments.count() - 1) / \
+               current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
     pagination = post.comments.order_by(Comment.timestamp.desc()).paginate(
-        page,per_page = current_app.config['FLASKY_COMMENTS_PER_PAGE'],error_out = False)
+        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'], error_out=False)
     comments = pagination.items
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('post.html', posts=[post],form=form, categories = categories,
-                           comments = comments,pagination=pagination)
+    return render_template('post.html', posts=[post], form=form, categories=categories,
+                           comments=comments, pagination=pagination)
 
-#分类
-@main.route('/category-edit', methods=['GET','POST'])
+
+# 分类
+@main.route('/category-edit', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def category():
@@ -177,21 +193,24 @@ def category():
         flash('分类已经添加')
         return redirect(url_for('.category'))
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('category_edit.html',form=form,categories=categories)
+    return render_template('edit_category.html', form=form, categories=categories)
 
-@main.route('/tags',methods=['GET','POST'])
+
+@main.route('/tags', methods=['GET', 'POST'])
 def tags():
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('show_categories.html',categories=categories)
+    return render_template('show_categories.html', categories=categories)
 
-@main.route('/tag/<int:id>',methods=['GET','POST'])
+
+@main.route('/tag/<int:id>', methods=['GET', 'POST'])
 def tag(id):
     category = Category.query.get_or_404(id)
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('show_category.html', category = category, categories = categories)
+    return render_template('show_category.html', category=category, categories=categories)
 
-#修改文章
-@main.route('/edit/<int:id>', methods=['GET','POST'])
+
+# 修改文章
+@main.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit(id):
     post = Post.query.get_or_404(id)
@@ -211,13 +230,14 @@ def edit(id):
     form.head.data = post.head
     form.category.data = post.categories_id
     categories = Category.query.order_by(Category.id.asc()).all()
-    return render_template('edit_post.html', form=form, categories = categories)
+    return render_template('edit_post.html', form=form, categories=categories)
+
 
 @main.route('/follow/<username>')
 @login_required
 @permission_required(Permission.FOLLOW)
 def follow(username):
-    user= User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
     if user is None:
         flash('无效用户')
         return redirect(url_for('.index'))
@@ -228,11 +248,12 @@ def follow(username):
     flash('你现在已经关注了 %s' % username)
     return redirect(url_for('.user', username=username))
 
+
 @main.route('/unfollow/<username>')
 @login_required
 @permission_required(Permission.FOLLOW)
 def unfollow(username):
-    user= User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
     if user is None:
         flash('无效用户')
         return redirect(url_for('.index'))
@@ -243,42 +264,48 @@ def unfollow(username):
     flash('你现在已经取消关注了 %s' % username)
     return redirect(url_for('.user', username=username))
 
+
 @main.route('/followers/<username>')
 def followers(username):
-    user= User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
     if user is None:
         flash('无效用户')
         return redirect(url_for('.index'))
-    page = request.args.get('page',1,type=int)
+    page = request.args.get('page', 1, type=int)
     pagination = user.followers.paginate(
         page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
-    follows = [{'user':item.follower,'timestamp':item.timestamp}
-                for item in pagination.items]
-    return render_template('followers.html', user=user,title='Followers of', endpoint='.followers',pagination=pagination,follows=follows)
+    follows = [{'user': item.follower, 'timestamp': item.timestamp}
+               for item in pagination.items]
+    return render_template('followers.html', user=user, title='Followers of', endpoint='.followers',
+                           pagination=pagination, follows=follows)
+
 
 @main.route('/followed_by/<username>')
 def followed_by(username):
-    user= User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
     if user is None:
         flash('无效用户')
         return redirect(url_for('.index'))
-    page = request.args.get('page',1,type=int)
+    page = request.args.get('page', 1, type=int)
     pagination = user.followed.paginate(
         page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
-    follows = [{'user':item.followed,'timestamp':item.timestamp}
-                for item in pagination.items]
-    return render_template('followers.html', user=user,title='Followed by', endpoint='.followed_by',pagination=pagination,follows=follows)
+    follows = [{'user': item.followed, 'timestamp': item.timestamp}
+               for item in pagination.items]
+    return render_template('followers.html', user=user, title='Followed by', endpoint='.followed_by',
+                           pagination=pagination, follows=follows)
+
 
 @main.route('/all')
 @login_required
 def show_all():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed','', max_age=30*24*60*60)
+    resp.set_cookie('show_followed', '', max_age=30 * 24 * 60 * 60)
     return resp
+
 
 @main.route('/followed')
 @login_required
 def show_followed():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed','1', max_age=30*24*60*60)
+    resp.set_cookie('show_followed', '1', max_age=30 * 24 * 60 * 60)
     return resp
